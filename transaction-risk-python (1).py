@@ -366,61 +366,50 @@ def main():
         fig_scatter = create_amount_vs_risk_scatter(df)
         st.plotly_chart(fig_scatter, use_container_width=True)
         
+        
         # Top 20 High-Risk Transactions Table
         st.subheader("🚨 Top 20 High-Risk Transactions")
         
         top_20_high_risk = df.head(20)
         
-        # Create display columns based on available data
+        # Define preferred columns and their display names
+        preferred_columns = {
+            'txn_id': 'Transaction ID',
+            'transaction_id': 'Transaction ID',
+            'id': 'Transaction ID',
+            'trans_id': 'Transaction ID',
+            'risk_score': 'Risk Score',
+            'risk_category': 'Risk Category',
+            'amount_usd': 'Amount (USD)',
+            'amount': 'Amount (USD)',
+            'transaction_amount': 'Amount (USD)',
+            'amt_usd': 'Amount (USD)',
+            'sender_country': 'Sender Country',
+            'from_country': 'Sender Country',
+            'origin_country': 'Sender Country',
+            'receiver_country': 'Receiver Country',
+            'to_country': 'Receiver Country',
+            'destination_country': 'Receiver Country',
+            'channel': 'Channel',
+            'transaction_channel': 'Channel',
+            'method': 'Channel',
+            'merchant_category': 'Merchant Category',
+            'merchant_type': 'Merchant Category',
+            'category': 'Merchant Category'
+        }
+        
+        # Select the first available column for each display name
         available_columns = []
         display_names = []
         
-        # Transaction ID
-        for col in ['txn_id', 'transaction_id', 'id', 'trans_id']:
-            if col in df.columns:
+        used_display_names = set()
+        for col, display_name in preferred_columns.items():
+            if col in top_20_high_risk.columns and display_name not in used_display_names:
                 available_columns.append(col)
-                display_names.append('Transaction ID')
-                break
+                display_names.append(display_name)
+                used_display_names.add(display_name)
         
-        # Risk score and category (always available after processing)
-        available_columns.extend(['risk_score', 'risk_category'])
-        display_names.extend(['Risk Score', 'Risk Category'])
-        
-        # Amount
-        for col in ['amount_usd', 'amount', 'transaction_amount', 'amt_usd']:
-            if col in df.columns:
-                available_columns.append(col)
-                display_names.append('Amount (USD)')
-                break
-        
-        # Countries
-        for col in ['sender_country', 'from_country', 'origin_country']:
-            if col in df.columns:
-                available_columns.append(col)
-                display_names.append('Sender Country')
-                break
-                
-        for col in ['receiver_country', 'to_country', 'destination_country']:
-            if col in df.columns:
-                available_columns.append(col)
-                display_names.append('Receiver Country')
-                break
-        
-        # Channel
-        for col in ['channel', 'transaction_channel', 'method']:
-            if col in df.columns:
-                available_columns.append(col)
-                display_names.append('Channel')
-                break
-        
-        # Merchant category
-        for col in ['merchant_category', 'merchant_type', 'category']:
-            if col in df.columns:
-                available_columns.append(col)
-                display_names.append('Merchant Category')
-                break
-        
-        # Format the display dataframe
+        # Build display DataFrame
         display_df = top_20_high_risk[available_columns].copy()
         
         # Format amount columns
@@ -432,17 +421,20 @@ def main():
         column_mapping = dict(zip(available_columns, display_names))
         display_df = display_df.rename(columns=column_mapping)
         
-        # Style the dataframe
-        def style_risk_category(val):
-            if val == 'High':
-                return 'color: #dc3545; font-weight: bold'
-            elif val == 'Medium':
-                return 'color: #fd7e14; font-weight: bold'
-            else:
-                return 'color: #28a745; font-weight: bold'
+        # Style the Risk Category column safely
+        if 'Risk Category' in display_df.columns:
+            def style_risk_category(val):
+                if val == 'High':
+                    return 'color: #dc3545; font-weight: bold'
+                elif val == 'Medium':
+                    return 'color: #fd7e14; font-weight: bold'
+                else:
+                    return 'color: #28a745; font-weight: bold'
         
-        styled_df = display_df.style.applymap(style_risk_category, subset=['risk_category'])
-        st.dataframe(styled_df, use_container_width=True)
+            styled_df = display_df.style.applymap(style_risk_category, subset=['Risk Category'])
+            st.dataframe(styled_df, use_container_width=True)
+        else:
+            st.dataframe(display_df, use_container_width=True)
         
         # AI Narrative Summary
         st.subheader("🤖 AI Risk Assessment Summary")
